@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { Box, Container, Grid, Typography } from '@mui/material';
 import axios from 'axios';
 import React from 'react'
+import SearchBar from '@/components/SearchBar';
 
 const Detail = ({ detail }) => {
 
