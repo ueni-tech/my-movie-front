@@ -6,11 +6,11 @@ const Dashboard = () => {
         <AppLayout
             header={
                 <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Dashboard
+                    Home
                 </h2>
             }>
             <Head>
-                <title>Laravel - Dashboard</title>
+                <title>Laravel - Home</title>
             </Head>
 
             <div className="py-12">
