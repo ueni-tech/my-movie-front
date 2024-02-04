@@ -69,7 +69,7 @@ const Home = () => {
                 sx={{
                   aspectRatio: '2/3',
                 }}
-                image={`https://image.tmdb.org/t/p/original${movie.poster_path}`}
+                image={`https://image.tmdb.org/t/p/original${movie.poster_path}&api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`}
                 alt={movie.title} />
 
               <Typography>
