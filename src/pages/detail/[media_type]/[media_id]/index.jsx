@@ -1,11 +1,60 @@
 import AppLayout from '@/components/Layouts/AppLayout';
 import Head from 'next/head'
-import { Box, Container, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, Fab, Grid, Modal, Rating, TextareaAutosize, Tooltip, Typography } from '@mui/material';
 import axios from 'axios';
-import React from 'react'
-import SearchBar from '@/components/SearchBar';
+import React, { useEffect, useState } from 'react'
+import AddIcon from '@mui/icons-material/Add';
+import laravelAxios from '@/lib/laravelAxios';
 
-const Detail = ({ detail, media_type }) => {
+const Detail = ({ detail, media_type, media_id }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const reviews = [
+    {
+      id: 1,
+      content: "とても面白かったです。",
+      rating: 5,
+      user: {
+        name: "test1",
+      }
+    },
+    {
+      id: 2,
+      content: "まあまあ面白かったです。",
+      rating: 3,
+      user: {
+        name: "test2",
+      }
+    },
+    {
+      id: 1,
+      content: "うーん、微妙でした。",
+      rating: 2,
+      user: {
+        name: "test3",
+      }
+    },
+  ]
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await laravelAxios.get(`api/reviews/${media_type}/${media_id}`);
+        console.log(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchReviews();
+  }, [media_type, media_id]);
 
   return (
     <AppLayout
@@ -67,6 +116,97 @@ const Detail = ({ detail, media_type }) => {
         </Container>
 
       </Box>
+
+      {/* レビュー一覧 */}
+      <Container sx={{
+        py: 4,
+      }}>
+        <Typography component="h1" variant='h4' align='center' gutterBottom>
+          レビュー一覧
+        </Typography>
+
+        <Grid container spacing={3}>
+          {reviews.map((review) => (
+            <Grid item xs={12} key={review.id}>
+              <Card>
+                <CardContent>
+                  <Typography
+                    variant='h6'
+                    component='div'
+                    gutterBottom
+                  >
+                    {review.user.name}
+                  </Typography>
+                  <Rating value={review.rating} readOnly />
+                  <Typography
+                    variant='body2'
+                    color={'textSecondary'}
+                    paragraph
+                  >
+                    {review.content}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+      {/* レビュー一覧 ここまで */}
+
+      {/* レビュー投稿ボタン */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: '16px',
+          right: '16px',
+          zIndex: 1000,
+        }}
+      >
+        <Tooltip title="レビューを投稿する">
+          <Fab
+            style={{ background: '#1976d2', color: 'white' }}
+            onClick={handleOpen}
+          >
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      </Box>
+      {/* レビュー投稿ボタン ここまで */}
+
+      {/* レビュー投稿モーダル */}
+      <Modal open={open} onClose={handleClose}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            border: '2px solid #000',
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography variant='h6' component='h2' gutterBottom>
+            レビューを書く
+          </Typography>
+
+          <Rating required />
+          <TextareaAutosize
+            required
+            minRows={5}
+            placeholder='レビュー内容'
+            style={{ width: '100%', marginTop: '10px' }}
+          />
+        <Button
+          variant="outlined"
+        >
+          送信
+        </Button>
+        </Box>
+      </Modal>
+      {/* レビュー投稿モーダル ここまで */}
     </AppLayout>
   )
 }
