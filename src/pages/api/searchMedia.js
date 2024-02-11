@@ -2,7 +2,7 @@ import axios from "axios";
 
 export default async (req, res) => {
   const {searchQuery} = req.query;
-  console.log(searchQuery);
+  // console.log(searchQuery);
 
   if(!searchQuery){
     return res.status(400).json({message: '検索文字がありません'});
