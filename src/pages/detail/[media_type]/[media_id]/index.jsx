@@ -8,6 +8,9 @@ import laravelAxios from '@/lib/laravelAxios';
 
 const Detail = ({ detail, media_type, media_id }) => {
   const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState('');
+  const [reviews, setReviews] = useState([]);
 
   const handleOpen = () => {
     setOpen(true);
@@ -17,38 +20,39 @@ const Detail = ({ detail, media_type, media_id }) => {
     setOpen(false);
   };
 
-  const reviews = [
-    {
-      id: 1,
-      content: "とても面白かったです。",
-      rating: 5,
-      user: {
-        name: "test1",
-      }
-    },
-    {
-      id: 2,
-      content: "まあまあ面白かったです。",
-      rating: 3,
-      user: {
-        name: "test2",
-      }
-    },
-    {
-      id: 1,
-      content: "うーん、微妙でした。",
-      rating: 2,
-      user: {
-        name: "test3",
-      }
-    },
-  ]
+  const handleReviwChange = (e) => {
+    setReview(e.target.value);
+  }
+
+  const handleRatingChange = (e, newValue) => {
+    setRating(newValue);
+  };
+
+  const isDisavled = !rating || !review.trim();
+
+  const handleReviewAdd = async () => {
+    handleClose();
+    try {
+      const response = await laravelAxios.post(`api/reviews/`, {
+        review,
+        rating,
+        media_type,
+        media_id,
+      });
+      const newRewiew = response.data;
+      setReviews([...reviews, newRewiew]);
+      setRating(0);
+      setReview('');
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         const response = await laravelAxios.get(`api/reviews/${media_type}/${media_id}`);
-        console.log(response.data);
+        setReviews(response.data);
       } catch (error) {
         console.log(error);
       }
@@ -192,15 +196,22 @@ const Detail = ({ detail, media_type, media_id }) => {
             レビューを書く
           </Typography>
 
-          <Rating required />
+          <Rating 
+          required 
+          onChange={handleRatingChange}
+          value={rating} />
           <TextareaAutosize
             required
             minRows={5}
             placeholder='レビュー内容'
             style={{ width: '100%', marginTop: '10px' }}
+            onChange={handleReviwChange}
+            value={review}
           />
         <Button
           variant="outlined"
+          disabled={isDisavled}
+          onClick={handleReviewAdd}
         >
           送信
         </Button>
