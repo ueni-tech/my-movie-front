@@ -1,16 +1,21 @@
 import AppLayout from '@/components/Layouts/AppLayout';
 import Head from 'next/head'
-import { Box, Button, Card, CardContent, Container, Fab, Grid, Modal, Rating, TextareaAutosize, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Card, CardContent, Container, Fab, Grid, Modal, Rating, TextareaAutosize, Tooltip, Typography } from '@mui/material';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import AddIcon from '@mui/icons-material/Add';
+import StarIcon from '@mui/icons-material/Star';
 import laravelAxios from '@/lib/laravelAxios';
+import { useAuth } from '@/hooks/auth';
 
 const Detail = ({ detail, media_type, media_id }) => {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
+  const { user } = useAuth({ middleware: 'auth' });
+  console.log(user);
 
   const handleOpen = () => {
     setOpen(true);
@@ -28,7 +33,7 @@ const Detail = ({ detail, media_type, media_id }) => {
     setRating(newValue);
   };
 
-  const isDisavled = !rating || !review.trim();
+  const isDisabled = !rating || !review.trim();
 
   const handleReviewAdd = async () => {
     handleClose();
@@ -39,12 +44,40 @@ const Detail = ({ detail, media_type, media_id }) => {
         media_type,
         media_id,
       });
-      const newRewiew = response.data;
-      setReviews([...reviews, newRewiew]);
+      const newReview = response.data;
+      setReviews([...reviews, newReview]);
       setRating(0);
       setReview('');
+
+      const updateReviews = [...reviews, newReview];
+      updateAverageRating(updateReviews);
+
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const updateAverageRating = (updateReviews) => {
+    if (updateReviews.length > 0) {
+      const totalRating = updateReviews.reduce((acc, review) => acc + review.rating, 0);
+
+      const average = (totalRating / updateReviews.length).toFixed(1);
+      setAverageRating(average);
+    } else {
+      setAverageRating(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (confirm('レビューを削除しますか？')) {
+      try {
+        const response = await laravelAxios.delete(`api/reviews/${id}`);
+        const fliteredReviews = reviews.filter((review) => review.id !== id);
+        setReviews(fliteredReviews);
+        updateAverageRating(fliteredReviews);
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
@@ -52,7 +85,9 @@ const Detail = ({ detail, media_type, media_id }) => {
     const fetchReviews = async () => {
       try {
         const response = await laravelAxios.get(`api/reviews/${media_type}/${media_id}`);
-        setReviews(response.data);
+        const fetchedReviews = response.data;
+        setReviews(fetchedReviews);
+        updateAverageRating(fetchedReviews);
       } catch (error) {
         console.log(error);
       }
@@ -112,6 +147,32 @@ const Detail = ({ detail, media_type, media_id }) => {
               <Typography paragraph>
                 {detail.overview}
               </Typography>
+
+              <Box
+                gap={2}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Rating
+                  readOnly
+                  precision={0.5}
+                  emptyIcon={<StarIcon style={{ color: 'white' }} />}
+                  value={parseFloat(averageRating)}
+                />
+                <Typography
+                  sx={{
+                    ml: 1,
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {averageRating}
+                </Typography>
+              </Box>
+
               <Typography variant='h6'>
                 {media_type === 'movie' ? `公開日：${detail.release_date}` : `初回放送日：${detail.first_air_date}`}
               </Typography>
@@ -149,6 +210,21 @@ const Detail = ({ detail, media_type, media_id }) => {
                   >
                     {review.content}
                   </Typography>
+
+                  {user?.id === review.user_id && (
+                    <Grid
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                      }}
+                    >
+                      <ButtonGroup>
+                        <Button>編集</Button>
+                        <Button color='error' onClick={() => handleDelete(review.id)}>削除</Button>
+                      </ButtonGroup>
+                    </Grid>
+                  )}
+
                 </CardContent>
               </Card>
             </Grid>
@@ -196,10 +272,10 @@ const Detail = ({ detail, media_type, media_id }) => {
             レビューを書く
           </Typography>
 
-          <Rating 
-          required 
-          onChange={handleRatingChange}
-          value={rating} />
+          <Rating
+            required
+            onChange={handleRatingChange}
+            value={rating} />
           <TextareaAutosize
             required
             minRows={5}
@@ -208,13 +284,13 @@ const Detail = ({ detail, media_type, media_id }) => {
             onChange={handleReviwChange}
             value={review}
           />
-        <Button
-          variant="outlined"
-          disabled={isDisavled}
-          onClick={handleReviewAdd}
-        >
-          送信
-        </Button>
+          <Button
+            variant="outlined"
+            disabled={isDisabled}
+            onClick={handleReviewAdd}
+          >
+            送信
+          </Button>
         </Box>
       </Modal>
       {/* レビュー投稿モーダル ここまで */}
