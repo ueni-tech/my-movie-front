@@ -11,11 +11,14 @@ import { useAuth } from '@/hooks/auth';
 const Detail = ({ detail, media_type, media_id }) => {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
-  const [review, setReview] = useState('');
+  const [content, setContent] = useState('');
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
+  const [editMode, setEditMode] = useState(null);
+  const [editedRating, setEditedRating] = useState(null);
+  const [editedContent, setEditedContent] = useState('');
+
   const { user } = useAuth({ middleware: 'auth' });
-  console.log(user);
 
   const handleOpen = () => {
     setOpen(true);
@@ -26,20 +29,25 @@ const Detail = ({ detail, media_type, media_id }) => {
   };
 
   const handleReviwChange = (e) => {
-    setReview(e.target.value);
+    setContent(e.target.value);
   }
 
   const handleRatingChange = (e, newValue) => {
     setRating(newValue);
   };
 
-  const isDisabled = !rating || !review.trim();
+  const isButtonDisabled = (rating, content) => {
+    return !rating || !content.trim();
+  };
+
+  const isReviewButtonDiabled =  isButtonDisabled(rating, content);
+  const isEditButtonDisabled = isButtonDisabled(editedRating, editedContent);
 
   const handleReviewAdd = async () => {
     handleClose();
     try {
       const response = await laravelAxios.post(`api/reviews/`, {
-        review,
+        content,
         rating,
         media_type,
         media_id,
@@ -47,7 +55,7 @@ const Detail = ({ detail, media_type, media_id }) => {
       const newReview = response.data;
       setReviews([...reviews, newReview]);
       setRating(0);
-      setReview('');
+      setContent('');
 
       const updateReviews = [...reviews, newReview];
       updateAverageRating(updateReviews);
@@ -78,6 +86,23 @@ const Detail = ({ detail, media_type, media_id }) => {
       } catch (error) {
         console.log(error);
       }
+    }
+  };
+
+  const handleEdit = (review) => {
+    setEditMode(review.id);
+    setEditedRating(review.rating);
+    setEditedContent(review.content);
+  };
+
+  const handleConfirmEdit = async (id) => {
+    try {
+      const response = await laravelAxios.put(`api/reviews/${id}`, {
+        rating: editedRating,
+        content: editedContent,
+      });
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -202,14 +227,24 @@ const Detail = ({ detail, media_type, media_id }) => {
                   >
                     {review.user.name}
                   </Typography>
-                  <Rating value={review.rating} readOnly />
-                  <Typography
-                    variant='body2'
-                    color={'textSecondary'}
-                    paragraph
-                  >
-                    {review.content}
-                  </Typography>
+                  {editMode === review.id ? (
+                    <>
+                      {/* 編集中の見た目 */}
+                      <Rating value={editedRating} onChange={(e, newValue) => setEditedRating(newValue)} />
+                      <TextareaAutosize minRows={3} style={{ width: '100%' }} value={editedContent} onChange={(e)=>setEditedContent(e.target.value)} />
+                    </>
+                  ) : (
+                    <>
+                      <Rating value={review.rating} readOnly />
+                      <Typography
+                        variant='body2'
+                        color={'textSecondary'}
+                        paragraph
+                      >
+                        {review.content}
+                      </Typography>
+                    </>
+                  )}
 
                   {user?.id === review.user_id && (
                     <Grid
@@ -218,10 +253,14 @@ const Detail = ({ detail, media_type, media_id }) => {
                         justifyContent: 'flex-end',
                       }}
                     >
-                      <ButtonGroup>
-                        <Button>編集</Button>
-                        <Button color='error' onClick={() => handleDelete(review.id)}>削除</Button>
-                      </ButtonGroup>
+                      {editMode === review.id ? (
+                        <Button onClick={()=>handleConfirmEdit(review.id)} disabled={isEditButtonDisabled}>更新</Button>
+                      ) : (
+                        <ButtonGroup>
+                          <Button onClick={() => handleEdit(review)}>編集</Button>
+                          <Button color='error' onClick={() => handleDelete(review.id)}>削除</Button>
+                        </ButtonGroup>
+                      )}
                     </Grid>
                   )}
 
@@ -282,11 +321,11 @@ const Detail = ({ detail, media_type, media_id }) => {
             placeholder='レビュー内容'
             style={{ width: '100%', marginTop: '10px' }}
             onChange={handleReviwChange}
-            value={review}
+            value={content}
           />
           <Button
             variant="outlined"
-            disabled={isDisabled}
+            disabled={isReviewButtonDiabled}
             onClick={handleReviewAdd}
           >
             送信
