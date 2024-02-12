@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import StarIcon from '@mui/icons-material/Star';
 import laravelAxios from '@/lib/laravelAxios';
 import { useAuth } from '@/hooks/auth';
+import Link from 'next/link';
 
 const Detail = ({ detail, media_type, media_id }) => {
   const [open, setOpen] = useState(false);
@@ -40,7 +41,7 @@ const Detail = ({ detail, media_type, media_id }) => {
     return !rating || !content.trim();
   };
 
-  const isReviewButtonDiabled =  isButtonDisabled(rating, content);
+  const isReviewButtonDiabled = isButtonDisabled(rating, content);
   const isEditButtonDisabled = isButtonDisabled(editedRating, editedContent);
 
   const handleReviewAdd = async () => {
@@ -103,7 +104,7 @@ const Detail = ({ detail, media_type, media_id }) => {
       });
 
       const updatedReview = response.data;
-      const updatedReviews = reviews.map((review)=>{
+      const updatedReviews = reviews.map((review) => {
         if (review.id === id) {
           return {
             ...review,
@@ -249,18 +250,20 @@ const Detail = ({ detail, media_type, media_id }) => {
                     <>
                       {/* 編集中の見た目 */}
                       <Rating value={editedRating} onChange={(e, newValue) => setEditedRating(newValue)} />
-                      <TextareaAutosize minRows={3} style={{ width: '100%' }} value={editedContent} onChange={(e)=>setEditedContent(e.target.value)} />
+                      <TextareaAutosize minRows={3} style={{ width: '100%' }} value={editedContent} onChange={(e) => setEditedContent(e.target.value)} />
                     </>
                   ) : (
                     <>
                       <Rating value={review.rating} readOnly />
-                      <Typography
-                        variant='body2'
-                        color={'textSecondary'}
-                        paragraph
-                      >
-                        {review.content}
-                      </Typography>
+                      <Link href={`/detail/${media_type}/${media_id}/review/${review.id}`}>
+                        <Typography
+                          variant='body2'
+                          color={'textSecondary'}
+                          paragraph
+                        >
+                          {review.content}
+                        </Typography>
+                      </Link>
                     </>
                   )}
 
@@ -272,7 +275,7 @@ const Detail = ({ detail, media_type, media_id }) => {
                       }}
                     >
                       {editMode === review.id ? (
-                        <Button onClick={()=>handleConfirmEdit(review.id)} disabled={isEditButtonDisabled}>更新</Button>
+                        <Button onClick={() => handleConfirmEdit(review.id)} disabled={isEditButtonDisabled}>更新</Button>
                       ) : (
                         <ButtonGroup>
                           <Button onClick={() => handleEdit(review)}>編集</Button>
