@@ -79,7 +79,7 @@ const Detail = ({ detail, media_type, media_id }) => {
   const handleDelete = async (id) => {
     if (confirm('レビューを削除しますか？')) {
       try {
-        const response = await laravelAxios.delete(`api/reviews/${id}`);
+        const response = await laravelAxios.delete(`api/review/${id}`);
         const fliteredReviews = reviews.filter((review) => review.id !== id);
         setReviews(fliteredReviews);
         updateAverageRating(fliteredReviews);
@@ -97,10 +97,28 @@ const Detail = ({ detail, media_type, media_id }) => {
 
   const handleConfirmEdit = async (id) => {
     try {
-      const response = await laravelAxios.put(`api/reviews/${id}`, {
+      const response = await laravelAxios.put(`api/review/${id}`, {
         rating: editedRating,
         content: editedContent,
       });
+
+      const updatedReview = response.data;
+      const updatedReviews = reviews.map((review)=>{
+        if (review.id === id) {
+          return {
+            ...review,
+            content: updatedReview.content,
+            rating: updatedReview.rating
+          }
+        }
+        return review;
+      });
+
+      setReviews(updatedReviews);
+      updateAverageRating(updatedReviews);
+
+      setEditMode(null);
+
     } catch (error) {
       console.log(error);
     }
