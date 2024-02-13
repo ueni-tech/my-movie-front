@@ -62,7 +62,7 @@ const search = () => {
           filteredResults.length > 0 ? (
             <Grid container spacing={3}>
               {filteredResults.map(media => (
-                <MediaCard item={media} key={media.id} />
+                <MediaCard item={media} key={media.id} isContent={true} />
               ))}
             </Grid>
           ) : (
